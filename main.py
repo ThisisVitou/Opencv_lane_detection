@@ -4,6 +4,7 @@ import argparse
 
 from edge import detect_edges
 from inverse_perspective import inversePerspectiveTransform
+from searchBox import SearchBox
 
 def open_capture(source: str):
     # If source is a digit use webcam, else treat as file path
@@ -57,6 +58,36 @@ def get_perspective_points(frame_width, frame_height):
     ])
     return src_points, dst_points
 
+def create_box_visualization(birdseye, birdseye_edges, number_of_boxes=10):
+    left_boxes = []
+    right_boxes = []
+    for i in range(number_of_boxes):
+        y_pos = 245 - i * 21
+        box = SearchBox(birdseye, birdseye_edges, x=80, y=y_pos, width=100, height=20)
+        left_boxes.append(box)
+
+    for i in range(number_of_boxes):
+        y_pos = 245 - i * 21
+        box = SearchBox(birdseye, birdseye_edges, x=280, y=y_pos, width=100, height=20)
+        right_boxes.append(box)
+
+    for box in left_boxes:
+        box.detect()
+    for box in right_boxes:
+        box.detect()
+
+    lvis = birdseye.copy()
+    rvis = birdseye.copy()
+
+    for box in left_boxes:
+        lvis = box.visualize()
+    for box in right_boxes:
+        rvis = box.visualize()
+
+    combined = cv.hconcat([lvis, rvis])
+    
+    return combined
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", default="0", help="Webcam index (e.g. 0) or video file path")
@@ -79,6 +110,8 @@ def main():
         h, w = frame.shape[:2]
         src_points, dst_points = get_perspective_points(w, h)
 
+
+        ## just test out the trapezoid area
         debug_frame = frame.copy()
         for i, p in enumerate(src_points):
             cv.circle(debug_frame, tuple(map(int, p)), 6, (0,0,255), -1)
@@ -86,15 +119,25 @@ def main():
         cv.polylines(debug_frame, [src_points.astype(int)], True, (0,255,0), 2)
         cv.imshow("src trapezoid", debug_frame)
 
-        detector = detect_edges(frame)
+        detector = detect_edges(frame) # create edge detector instance
         edges = detector.canny_edge(mask_height=150)
 
-        ipt = inversePerspectiveTransform(edges)
+        ## apply inverse perspective transform
+        ipt = inversePerspectiveTransform(frame) # create inverse perspective transform instance
         birdseye = ipt.inverse_perspective_transform(src_points, dst_points)
 
-        cv.imshow("frame", frame)
+        ## Apply edge detection to birdseye view
+        birdseye_detector = detect_edges(birdseye)
+        birdseye_edges = birdseye_detector.canny_edge(mask_height=300)
+        
+        ## test search boxes on birdseye edges
+        combined = create_box_visualization(birdseye, birdseye_edges, number_of_boxes=10)
+
+        # cv.imshow("frame", frame)
         cv.imshow("edges", edges)
         cv.imshow("birdseye", birdseye)
+        cv.imshow("birdseye_edges", birdseye_edges)
+        cv.imshow("Search Boxes", combined)
 
         key = cv.waitKey(1) & 0xFF
         if key == ord('q'):
