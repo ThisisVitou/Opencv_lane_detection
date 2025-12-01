@@ -61,6 +61,54 @@ def get_perspective_points(frame_width, frame_height):
     ])
     return src_points, dst_points
 
+def draw_lane_on_frame(frame, llane, rlane, src_points, dst_points, ipt):
+    """
+    Draw detected lanes as an overlay on the original frame.
+    
+    Parameters:
+    - frame: Original frame
+    - llane: Left lane points (x_coords, y_coords)
+    - rlane: Right lane points (x_coords, y_coords)
+    - src_points: Source perspective points
+    - dst_points: Destination perspective points
+    - ipt: inversePerspectiveTransform instance
+    """
+    # Create blank image for drawing lanes
+    lane_img = np.zeros_like(frame)
+    
+    # Check if we have enough points
+    if len(llane[0]) < 3 or len(rlane[0]) < 3:
+        return frame
+    
+    # Fit polynomials (2nd degree)
+    left_fit = np.polyfit(llane[1], llane[0], 2)
+    right_fit = np.polyfit(rlane[1], rlane[0], 2)
+    
+    # Generate y coordinates for the lane
+    ploty = np.linspace(0, frame.shape[0]-1, frame.shape[0])
+    
+    # Calculate x coordinates using the fitted polynomials
+    left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
+    right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+    
+    # Create points for polygon
+    pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
+    pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
+    pts = np.hstack((pts_left, pts_right))
+    
+    # Draw the lane on the blank image
+    cv.fillPoly(lane_img, np.int32([pts]), (0, 255, 0))
+    
+    # Transform back to original perspective
+    M_inv = cv.getPerspectiveTransform(dst_points, src_points)
+    warped_lane = cv.warpPerspective(lane_img, M_inv, (frame.shape[1], frame.shape[0]))
+    
+    # Combine with original frame
+    result = cv.addWeighted(frame, 1, warped_lane, 0.3, 0)
+    
+    return result
+
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -111,18 +159,17 @@ def main():
         birdseye_edges = birdseye_detector.canny_edge()
         
         ## test search boxes on birdseye edges
-        search_box = SearchBox(birdseye, birdseye_edges, lx=80, rx=280, y=245, width=100, height=20)
+        search_box = SearchBox(birdseye, birdseye_edges, lx=85, rx=280, y=230, width=100, height=20)
         vis, llane, rlane = search_box.visualize()
         
-        for i in llane:
-            print(i)
-        
+        frame_with_lane = draw_lane_on_frame(frame, llane, rlane, src_points, dst_points, ipt)
 
-        cv.imshow("frame", frame)
-        cv.imshow("edges", edges)
-        cv.imshow("birdseye", birdseye)
+        # cv.imshow("frame", frame)
+        # cv.imshow("edges", edges)
+        # cv.imshow("birdseye", birdseye)
         cv.imshow("birdseye_edges", birdseye_edges)
         cv.imshow("search box visualization", vis)
+        cv.imshow("frame with lane overlay", frame_with_lane)
         
 
 

@@ -82,10 +82,10 @@ class SearchBox():
             new_x = max(0, min(new_x, self.mask.shape[1] - self.width))
             if side == "left":
                 self.lx = new_x
-                self.last_valid_lx = new_x
+                self.last_valid_lx = self.lx
             elif side == "right":
                 self.rx = new_x
-                self.last_valid_rx = new_x
+                self.last_valid_rx = self.rx
         else:
             # No pixels found - use last valid position
             if side == "left":
@@ -101,8 +101,8 @@ class SearchBox():
         
         """
         vis = self.frame.copy() if self.frame.ndim == 3 else cv.cvtColor(self.frame, cv.COLOR_GRAY2BGR)
-        rlane = []
-        llane = []
+        rlane = ([],[])
+        llane = ([],[])
 
         for i in range(num_boxes):
 
@@ -127,7 +127,8 @@ class SearchBox():
             # Avg_x marker (if available)
             if self.avg_x is not None:
                 cv.circle(vis, (int(self.avg_x), center_y), 4, (255, 0, 0), 1)
-                llane.append(self.avg_x)
+            llane[0].append(center_x)
+            llane[1].append(center_y)
 
         for i in range(num_boxes):
 
@@ -152,7 +153,9 @@ class SearchBox():
             # Avg_x marker (if available)
             if self.avg_x is not None:
                 cv.circle(vis, (int(self.avg_x), center_y), 4, (255, 0, 0), 1)
-                rlane.append(self.avg_x)
+            rlane[0].append(center_x)
+            rlane[1].append(center_y)
+
             
             
         return vis, llane, rlane
