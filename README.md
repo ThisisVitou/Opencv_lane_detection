@@ -70,3 +70,6 @@ python test.py
   ```
   See class [`searchBox.SearchBox`](searchBox.py).
 - Perspective ROI placement: regenerate `point_ratios.npz` with [test.py](test.py) or replace the file.
+
+## Result
+![alt text](result.png)
