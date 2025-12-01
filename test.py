@@ -15,7 +15,7 @@ def convert_to_percentages(points, width, height):
     return [(x / width, y / height) for x, y in points]
 
 def main():
-    vid_path = 'test_video/test2.mp4'
+    vid_path = 'test_video/test3.mp4'
     if not os.path.isfile(vid_path):
         print(f"File not found: {vid_path}")
         return
@@ -34,10 +34,10 @@ def main():
     orig_h, orig_w = frame.shape[:2]
 
     points = [
-        (200, 719),
-        (1100, 719),
-        (400, 400),
-        (800, 400),
+        (200, 719), #1
+        (1100, 719), #2
+        (450, 600), #3
+        (800, 600), #4
 
         (250, 719),
         (1030, 719),
@@ -64,7 +64,7 @@ def main():
     draw_grid(orig_vis)
     for i, (x, y) in enumerate(points):
         color = (0, 0, 255) if i < 4 else (255, 0, 0)
-        cv.circle(orig_vis, (x, y), 6, color, -1, cv.LINE_AA)
+        cv.circle(orig_vis, (x, y), 2, color, -1, cv.LINE_AA)
         cv.putText(orig_vis, f"{i+1}", (x + 8, y - 8), cv.FONT_HERSHEY_SIMPLEX, 0.5, color, 1, cv.LINE_AA)
 
     # Draw scaled points on resized frame
@@ -72,12 +72,14 @@ def main():
     draw_grid(resized_vis)
     for i, (x, y) in enumerate(scaled_points):
         color = (0, 0, 255) if i < 4 else (255, 0, 0)
-        cv.circle(resized_vis, (x, y), 6, color, -1, cv.LINE_AA)
+        cv.circle(resized_vis, (x, y), 2, color, -1, cv.LINE_AA)
         cv.putText(resized_vis, f"{i+1}", (x + 6, y - 6), cv.FONT_HERSHEY_SIMPLEX, 0.45, color, 1, cv.LINE_AA)
 
     print("Ratios (x%, y%):")
     for r in ratios:
         print(f"{r[0]:.3f}, {r[1]:.3f}")
+
+    np.savez("point_ratios.npz", ratios=np.array(ratios))
 
     cv.imshow("Original Frame + Points", orig_vis)
     cv.imshow(f"Resized Frame ({ws}x{hs}) + Scaled Points", resized_vis)

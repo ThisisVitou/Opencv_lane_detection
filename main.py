@@ -5,6 +5,7 @@ import argparse
 from edge import detect_edges
 from inverse_perspective import inversePerspectiveTransform
 from searchBox import SearchBox
+from overlay import draw_lane_overlay
 
 def open_capture(source: str):
     # If source is a digit use webcam, else treat as file path
@@ -33,13 +34,15 @@ def resize_frame(frame, width: int | None, height: int | None):
 def get_perspective_points(frame_width, frame_height):
     w, h = frame_width, frame_height
     # Example trapezoid (tune these ratios)
-    top_y   = 0.556  
-    bottom_y= 0.999
+    points = np.load("point_ratios.npz")["ratios"]
 
-    left_top_x  = 0.312
-    right_top_x = 0.625
-    left_bottom_x  = 0.156
-    right_bottom_x = 0.859
+    top_y   = points[2][1]  # 0.764  
+    bottom_y= points[0][1]  # 1.0
+
+    left_top_x  = points[2][0]  # 0.430
+    right_top_x = points[3][0]  # 0.547
+    left_bottom_x  = points[0][0]  # 0.195
+    right_bottom_x = points[1][0]  # 0.805
 
     # Order: TL, TR, BR, BL
     src_points = np.float32([
@@ -67,6 +70,12 @@ def main():
     args = parser.parse_args()
 
     cap, is_webcam = open_capture(args.source)
+
+    # Get the video's FPS
+    fps = cap.get(cv.CAP_PROP_FPS)
+    if fps == 0 or is_webcam:
+        fps = 30  # Default for webcam or if FPS not available
+    delay = int(1000 / fps)  # Convert to milliseconds
     
     while True:
         ret, frame = cap.read()
@@ -103,17 +112,21 @@ def main():
         
         ## test search boxes on birdseye edges
         search_box = SearchBox(birdseye, birdseye_edges, lx=80, rx=280, y=245, width=100, height=20)
-        vis = search_box.visualize()
+        vis, llane, rlane = search_box.visualize()
+        
+        for i in llane:
+            print(i)
+        
 
-
-        # cv.imshow("frame", frame)
+        cv.imshow("frame", frame)
         cv.imshow("edges", edges)
         cv.imshow("birdseye", birdseye)
         cv.imshow("birdseye_edges", birdseye_edges)
         cv.imshow("search box visualization", vis)
+        
 
 
-        key = cv.waitKey(1) & 0xFF
+        key = cv.waitKey(delay) & 0xFF
         if key == ord('q'):
             break
 

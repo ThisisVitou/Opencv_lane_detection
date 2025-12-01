@@ -101,6 +101,8 @@ class SearchBox():
         
         """
         vis = self.frame.copy() if self.frame.ndim == 3 else cv.cvtColor(self.frame, cv.COLOR_GRAY2BGR)
+        rlane = []
+        llane = []
 
         for i in range(num_boxes):
 
@@ -125,6 +127,7 @@ class SearchBox():
             # Avg_x marker (if available)
             if self.avg_x is not None:
                 cv.circle(vis, (int(self.avg_x), center_y), 4, (255, 0, 0), 1)
+                llane.append(self.avg_x)
 
         for i in range(num_boxes):
 
@@ -149,9 +152,10 @@ class SearchBox():
             # Avg_x marker (if available)
             if self.avg_x is not None:
                 cv.circle(vis, (int(self.avg_x), center_y), 4, (255, 0, 0), 1)
+                rlane.append(self.avg_x)
             
             
-        return vis
+        return vis, llane, rlane
     
 
         
