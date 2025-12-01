@@ -102,7 +102,7 @@ def main():
         birdseye_edges = birdseye_detector.canny_edge(mask_height=300)
         
         ## test search boxes on birdseye edges
-        search_box = SearchBox(birdseye, birdseye_edges, x=80, y=245, width=100, height=20)
+        search_box = SearchBox(birdseye, birdseye_edges, lx=80, rx=280, y=245, width=100, height=20)
         vis = search_box.visualize()
 
 
