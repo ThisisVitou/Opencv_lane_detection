@@ -34,7 +34,7 @@ class SearchBox():
         self.width = width
         self.height = height
 
-    def detect(self):
+    def detect(self, y):
         """
         Detect and count pixels in the current ROI.
 
@@ -75,24 +75,32 @@ class SearchBox():
         """
         vis = self.frame.copy() if self.frame.ndim == 3 else cv.cvtColor(self.frame, cv.COLOR_GRAY2BGR)
 
-        box_x = self.x
-        box_y = self.y
+        for i in range(5):
 
-        # Keep box_y in bounds
-        box_y = max(0, min(box_y, self.mask.shape[0] - self.height))
+            
+            
+            box_x = self.x 
+            box_y = self.y - i * (self.height + 5)  # Stack boxes vertically with spacing
 
-        # Rectangle
-        cv.rectangle(vis, (box_x, box_y), (box_x + self.width, box_y + self.height),
-                        (0, 255, 0), 1)
+            self.detect(box_y)
+            # Keep box_y in bounds
+            box_y = max(0, min(box_y, self.mask.shape[0] - self.height))
 
-        # Center marker
-        center_x = box_x + self.width // 2
-        center_y = box_y + self.height // 2
-        cv.circle(vis, (center_x, center_y), 3, (0, 0, 255), -1)
+            # Rectangle
+            cv.rectangle(vis, (box_x, box_y), (box_x + self.width, box_y + self.height),
+                            (0, 255, 0), 1)
+            
+            
+            
+            # Center marker
 
-        # Avg_x marker (if available)
-        if self.avg_x is not None:
-            cv.circle(vis, (int(self.avg_x), center_y), 4, (255, 0, 0), 1)
+            center_x = box_x + self.width // 2
+            center_y = box_y + self.height // 2
+            cv.circle(vis, (center_x, center_y), 3, (0, 0, 255), -1)
+
+            # Avg_x marker (if available)
+            if self.avg_x is not None:
+                cv.circle(vis, (int(self.avg_x), center_y), 4, (255, 0, 0), 1)
 
         return vis
     

@@ -58,35 +58,6 @@ def get_perspective_points(frame_width, frame_height):
     ])
     return src_points, dst_points
 
-def create_box_visualization(birdseye, birdseye_edges, number_of_boxes=10):
-    left_boxes = []
-    right_boxes = []
-    for i in range(number_of_boxes):
-        y_pos = 245 - i * 21
-        box = SearchBox(birdseye, birdseye_edges, x=80, y=y_pos, width=100, height=20)
-        left_boxes.append(box)
-
-    for i in range(number_of_boxes):
-        y_pos = 245 - i * 21
-        box = SearchBox(birdseye, birdseye_edges, x=280, y=y_pos, width=100, height=20)
-        right_boxes.append(box)
-
-    for box in left_boxes:
-        box.detect()
-    for box in right_boxes:
-        box.detect()
-
-    lvis = birdseye.copy()
-    rvis = birdseye.copy()
-
-    for box in left_boxes:
-        lvis = box.visualize()
-    for box in right_boxes:
-        rvis = box.visualize()
-
-    combined = cv.hconcat([lvis, rvis])
-    
-    return combined
 
 def main():
     parser = argparse.ArgumentParser()
@@ -131,13 +102,16 @@ def main():
         birdseye_edges = birdseye_detector.canny_edge(mask_height=300)
         
         ## test search boxes on birdseye edges
-        combined = create_box_visualization(birdseye, birdseye_edges, number_of_boxes=10)
+        search_box = SearchBox(birdseye, birdseye_edges, x=80, y=245, width=100, height=20)
+        vis = search_box.visualize()
+
 
         # cv.imshow("frame", frame)
         cv.imshow("edges", edges)
         cv.imshow("birdseye", birdseye)
         cv.imshow("birdseye_edges", birdseye_edges)
-        cv.imshow("Search Boxes", combined)
+        cv.imshow("search box visualization", vis)
+
 
         key = cv.waitKey(1) & 0xFF
         if key == ord('q'):
