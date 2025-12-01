@@ -5,12 +5,13 @@ Simple lane detection with perspective transform, edge detection, sliding window
 ## How it works
 
 Pipeline per frame:
-1. Capture and optional resize ([main.py](main.py)).
-2. Compute perspective ROI from ratios stored in `point_ratios.npz` via [`main.get_perspective_points`](main.py).
-3. Edge detection in an Area-Of-Interest using Canny via [`edge.detect_edges.canny_edge`](edge.py).
-4. Bird’s-eye transform via [`inverse_perspective.inversePerspectiveTransform.inverse_perspective_transform`](inverse_perspective.py).
-5. Sliding windows to collect lane points via [`searchBox.SearchBox.visualize`](searchBox.py).
-6. Fit second-order polynomials and fill lane polygon, inverse-warp, and blend via [`main.draw_lane_on_frame`](main.py).
+
+1. Opencv read the video or webcam inside ([main.py](main.py)).
+2. Computing maks in ([edge.py](edge.py)).
+3. Getting inverse_perspective
+4. create a rectangle box to detect the mask in ([searchBox.py](searchBox.py)).
+
+
 
 Windows shown:
 - src trapezoid (debug)
@@ -44,8 +45,8 @@ python main.py --source test_video/test3.mp4 --width 480
 
 ## Perspective points (ratios)
 
-- Ratios for the perspective trapezoid are loaded from `point_ratios.npz` by [`main.get_perspective_points`](main.py).
-- You can regenerate/tune them using [test.py](test.py) (it reads the first frame of a video, draws points, and saves normalized ratios to `point_ratios.npz`).
+- Run the ([test.py](test.py)) to get the point_ratios.npz
+- If you want to test on a different video, make sure to change the point on lines 48. (tips: just change points 3 and 4)
 
 Generate/update ratios:
 ```bash
@@ -54,20 +55,18 @@ python test.py
 
 ## Tuning
 
-- Edge AOI and thresholds: [`edge.detect_edges`](edge.py) and [`edge.detect_edges.canny_edge`](edge.py) (defaults: low=25, high=80; AOI height set via mask_height).
+
+- Edge AOI and thresholds: [`edge.detect_edges`](edge.py) and [`edge.detect_edges.canny_edge`](edge.py) 
+
+    Default.
+
+    ```python
+    detector = detect_edges(frame, mask_height=150) 
+    edges = detector.canny_edge(low_threshold=25, high_threshold=80)
+    ```
 - Sliding windows start/size: edit the `SearchBox` call in [main.py](main.py), e.g.:
   ```python
   search_box = SearchBox(birdseye, birdseye_edges, lx=85, rx=280, y=230, width=100, height=20)
   ```
   See class [`searchBox.SearchBox`](searchBox.py).
 - Perspective ROI placement: regenerate `point_ratios.npz` with [test.py](test.py) or replace the file.
-
-## Files
-
-- App entry: [main.py](main.py)
-- Edge detection: [`edge.detect_edges`](edge.py)
-- Perspective transform: [`inverse_perspective.inversePerspectiveTransform`](inverse_perspective.py)
-- Sliding-window search: [`searchBox.SearchBox`](searchBox.py)
-- Lane overlay (poly fit + inverse warp): [`main.draw_lane_on_frame`](main.py)
-- Ratio helper scripts: [test.py](test.py), [testt.py](testt.py)
-- Ratios data: [point_ratios.npz](point_ratios.npz)
