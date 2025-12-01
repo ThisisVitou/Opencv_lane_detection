@@ -90,16 +90,16 @@ def main():
         cv.polylines(debug_frame, [src_points.astype(int)], True, (0,255,0), 2)
         cv.imshow("src trapezoid", debug_frame)
 
-        detector = detect_edges(frame) # create edge detector instance
-        edges = detector.canny_edge(mask_height=150)
+        detector = detect_edges(frame, mask_height=150) # create edge detector instance
+        edges = detector.canny_edge()
 
         ## apply inverse perspective transform
         ipt = inversePerspectiveTransform(frame) # create inverse perspective transform instance
         birdseye = ipt.inverse_perspective_transform(src_points, dst_points)
 
         ## Apply edge detection to birdseye view
-        birdseye_detector = detect_edges(birdseye)
-        birdseye_edges = birdseye_detector.canny_edge(mask_height=300)
+        birdseye_detector = detect_edges(birdseye, mask_height=300)
+        birdseye_edges = birdseye_detector.canny_edge()
         
         ## test search boxes on birdseye edges
         search_box = SearchBox(birdseye, birdseye_edges, lx=80, rx=280, y=245, width=100, height=20)

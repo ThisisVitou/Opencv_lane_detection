@@ -19,6 +19,9 @@ class SearchBox():
         self.width = width
         self.height = height
 
+        self.last_valid_lx = lx  # Store last valid positions
+        self.last_valid_rx = rx
+
         self.roi_mask = None
         self.avg_x = None
     
@@ -44,7 +47,6 @@ class SearchBox():
         # Use provided y or fall back to self.y
         if y is None:
             y = self.y
-
 
         # Ensure coordinates are within bounds
         if side == "left":
@@ -80,8 +82,16 @@ class SearchBox():
             new_x = max(0, min(new_x, self.mask.shape[1] - self.width))
             if side == "left":
                 self.lx = new_x
+                self.last_valid_lx = new_x
             elif side == "right":
                 self.rx = new_x
+                self.last_valid_rx = new_x
+        else:
+            # No pixels found - use last valid position
+            if side == "left":
+                self.lx = self.last_valid_lx
+            elif side == "right":
+                self.rx = self.last_valid_rx
 
         return self.avg_x
 

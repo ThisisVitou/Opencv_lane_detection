@@ -3,10 +3,11 @@ import numpy as np
 
 class detect_edges():
     """Class for edge detection using Canny algorithm."""
-    def __init__(self, frame):
+    def __init__(self, frame, mask_height=400):
         self.frame = frame
+        self.mask_height = mask_height
 
-    def aoi_mask(self, mask_height=400):
+    def aoi_mask(self):
         """
         Create an Area of Interest (AOI) mask for the given frame.
         The AOI is defined as a rectangle centered horizontally at the bottom of the frame,
@@ -16,7 +17,7 @@ class detect_edges():
         img = np.zeros((h, w), dtype=np.uint8)  # assuming 720p frame size
 
         rect_width = w
-        rect_height = mask_height
+        rect_height = self.mask_height
 
         x1 = w//2 - rect_width//2 # this just tell the first point of rectangle to x = 0
         y1 = h - rect_height 
@@ -28,9 +29,9 @@ class detect_edges():
 
         return mask
 
-    def canny_edge(self, low_threshold=50, high_threshold=150, mask_height=400):
+    def canny_edge(self, low_threshold=25, high_threshold=80):
         """Apply Canny edge detection to the frame."""
-        mask = self.aoi_mask(mask_height=mask_height)
+        mask = self.aoi_mask()
 
         gray = cv.cvtColor(self.frame, cv.COLOR_BGR2GRAY)
         blur = cv.GaussianBlur(gray, (7, 7), 1)
