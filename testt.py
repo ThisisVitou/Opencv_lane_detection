@@ -39,10 +39,10 @@ def get_perspective_points(frame_width, frame_height):
 
     # Output rectangle (can span full width)
     dst_points = np.float32([
-        [w * 0.20, 0],       # Top-left
-        [w * 0.80, 0],       # Top-right
-        [w * 0.80, h],       # Bottom-right
-        [w * 0.20, h],       # Bottom-left
+        points[6],       # Top-left
+        points[7],       # Top-right
+        points[5],       # Bottom-right
+        points[4],       # Bottom-left
     ])
     return src_points, dst_points
 
@@ -120,10 +120,11 @@ def main():
     ## Birdeye view transformation
     src_points, dst_points = get_perspective_points(w, h)
     ipt = inversePerspectiveTransform(frame_size)
-    birdeye_view = ipt.inverse_perspective_transform(src_points, dst_points)
+    birdeye_view = ipt.inverse_perspective_transform(src_points, dst_points, w, h)
+
     birdeye_edges = detect_edges(birdeye_view).canny_edge()
 
-    search_box = SearchBox(birdeye_view, birdeye_edges, lx=150, rx=420, y=450, width=100, height=20)
+    search_box = SearchBox(birdeye_view, birdeye_edges, lx=100, rx=500, y=450, width=120, height=20)
 
     while True:
         ret, frame = cap.read()
@@ -132,17 +133,14 @@ def main():
 
         frame = cv.resize(frame, (720, 480))  # Resize to 720x480
 
-
-
         ## Birdeye view transformation
         src_points, dst_points = get_perspective_points(w, h)
         ipt = inversePerspectiveTransform(frame)
-        birdeye_view = ipt.inverse_perspective_transform(src_points, dst_points)
+        birdeye_view = ipt.inverse_perspective_transform(src_points, dst_points, w, h)
 
         detector = detect_edges(birdeye_view) # create edge detector instance
         birdeye_edges = detector.canny_edge()
         
-
         ## debug draw trapezoid
         debug_frame = debug_perspective_transform(frame, src_points)
 
@@ -161,6 +159,8 @@ def main():
         cv.imshow('Edges', birdeye_edges)
         cv.imshow('Debug Frame', debug_frame)
         cv.imshow("search box visualization", vis)
+
+         # Draw lanes on original frame
 
         if cv.waitKey(1) & 0xFF == ord('q'):
             cap.release()
