@@ -3,6 +3,7 @@ import numpy as np
 from inverse_perspective import inversePerspectiveTransform
 from searchBox import SearchBox
 from edge import detect_edges
+from steering import SteeringController
 
 def open_camera(cap):
     _, frame_size = cap.read()
@@ -126,6 +127,12 @@ def main():
 
     search_box = SearchBox(birdeye_view, birdeye_edges, lx=100, rx=500, y=450, width=80, height=20)
 
+    # Initialize steering controller
+    steering = SteeringController(frame_width=w, frame_height=h, lookahead_distance=0.6)
+    
+    # You can adjust PID gains for better performance
+    steering.set_gains(kp=0.5, ki=0.0, kd=0.1)
+
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -154,12 +161,60 @@ def main():
 
         frame_with_lane = draw_lane_on_frame(frame, llane, rlane, src_points, dst_points)
 
+        # --- STEERING CALCULATION ---
+        steering_angle, lane_center = steering.calculate_steering_angle(llane, rlane)
+
+        # --- VISUALIZATION ---
+        # Draw steering information
+        cv.putText(vis, f'Steering: {steering_angle:.1f} deg', 
+                   (10, 30), cv.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        
+        # Draw direction indicator
+        center_x = w // 2
+        center_y = h - 50
+        arrow_length = 100
+
+        # Calculate arrow endpoint based on steering angle
+        angle_rad = np.radians(steering_angle)
+        end_x = int(center_x + arrow_length * np.sin(angle_rad))
+        end_y = int(center_y - arrow_length * np.cos(angle_rad))
+        
+        # Draw arrow
+        cv.arrowedLine(vis, (center_x, center_y), (end_x, end_y), 
+                       (0, 255, 255), 3, tipLength=0.3)
+        
+        # Draw lane center line
+        if lane_center is not None:
+            cv.line(vis, (int(lane_center), 0), (int(lane_center), h), 
+                   (255, 0, 255), 2)
+            
+        # Draw frame center line
+        cv.line(vis, (center_x, 0), (center_x, h), (0, 255, 255), 1)
+
+        # Add steering direction text
+        if steering_angle < -5:
+            direction = "LEFT"
+            color = (0, 165, 255)  # Orange
+        elif steering_angle > 5:
+            direction = "RIGHT"
+            color = (0, 165, 255)  # Orange
+        else:
+            direction = "STRAIGHT"
+            color = (0, 255, 0)  # Green
+        
+        cv.putText(vis, direction, (10, 60), 
+                   cv.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
+        
+        # Show the result
+        cv.imshow('Lane Detection with Steering', vis)
+        # cv.imshow('Processed Mask', masked_edges)
+
 
         # cv.imshow('Webcam', frame)
         cv.imshow('Edges', birdeye_edges)
         cv.imshow('Debug Frame', debug_frame)
-        cv.imshow("search box visualization", vis)
-        cv.imshow("Frame with Lane Overlay", frame_with_lane)
+        # cv.imshow("search box visualization", vis)
+        # cv.imshow("Frame with Lane Overlay", frame_with_lane)
 
          # Draw lanes on original frame
 
