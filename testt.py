@@ -56,7 +56,7 @@ def debug_perspective_transform(frame, src_points):
 
     return debug_frame
 
-def draw_lane_on_frame(frame, llane, rlane, src_points, dst_points, ipt):
+def draw_lane_on_frame(frame, llane, rlane, src_points, dst_points):
     """
     Draw detected lanes as an overlay on the original frame.
     
@@ -124,7 +124,7 @@ def main():
 
     birdeye_edges = detect_edges(birdeye_view).canny_edge()
 
-    search_box = SearchBox(birdeye_view, birdeye_edges, lx=100, rx=500, y=450, width=120, height=20)
+    search_box = SearchBox(birdeye_view, birdeye_edges, lx=100, rx=500, y=450, width=80, height=20)
 
     while True:
         ret, frame = cap.read()
@@ -152,13 +152,14 @@ def main():
 
         vis, llane, rlane = search_box.visualize()
 
-        
+        frame_with_lane = draw_lane_on_frame(frame, llane, rlane, src_points, dst_points)
 
 
         # cv.imshow('Webcam', frame)
         cv.imshow('Edges', birdeye_edges)
         cv.imshow('Debug Frame', debug_frame)
         cv.imshow("search box visualization", vis)
+        cv.imshow("Frame with Lane Overlay", frame_with_lane)
 
          # Draw lanes on original frame
 
