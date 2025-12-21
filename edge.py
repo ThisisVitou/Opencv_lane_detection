@@ -3,9 +3,9 @@ import numpy as np
 
 class detect_edges():
     """Class for edge detection using Canny algorithm."""
-    def __init__(self, frame, mask_height=400):
+    def __init__(self, frame, mask_height=1000):
         self.frame = frame
-        self.mask_height = mask_height
+        self.mask_height = mask_height ## this stupid, don't need this shit I thought it is a good idea.
 
     def aoi_mask(self):
         """

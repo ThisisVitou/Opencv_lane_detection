@@ -20,6 +20,7 @@ def open_capture(source: str):
     return cap, is_webcam
 
 def resize_frame(frame, width: int | None, height: int | None):
+    #for video file sources, resize frame if width or height specified
     if width is None and height is None:
         return frame
     h, w = frame.shape[:2]
@@ -123,7 +124,12 @@ def main():
     fps = cap.get(cv.CAP_PROP_FPS)
     if fps == 0 or is_webcam:
         fps = 30  # Default for webcam or if FPS not available
+
+    cap.set(cv.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv.CAP_PROP_FRAME_HEIGHT, 360)
     delay = int(1000 / fps)  # Convert to milliseconds
+    h, w = cap.get(cv.CAP_PROP_FRAME_HEIGHT), cap.get(cv.CAP_PROP_FRAME_WIDTH)
+    print(h, w, fps)
     
     while True:
         ret, frame = cap.read()
@@ -145,9 +151,9 @@ def main():
             cv.circle(debug_frame, tuple(map(int, p)), 6, (0,0,255), -1)
             cv.putText(debug_frame, f"S{i}", tuple(map(int, p+5)), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
         cv.polylines(debug_frame, [src_points.astype(int)], True, (0,255,0), 2)
-        cv.imshow("src trapezoid", debug_frame)
+        
 
-        detector = detect_edges(frame, mask_height=150) # create edge detector instance
+        detector = detect_edges(frame, mask_height=300) # create edge detector instance
         edges = detector.canny_edge()
 
         ## apply inverse perspective transform
@@ -159,17 +165,18 @@ def main():
         birdseye_edges = birdseye_detector.canny_edge()
         
         ## test search boxes on birdseye edges
-        search_box = SearchBox(birdseye, birdseye_edges, lx=85, rx=280, y=230, width=100, height=20)
+        search_box = SearchBox(birdseye, birdseye_edges, lx=150, rx=420, y=450, width=100, height=20)
         vis, llane, rlane = search_box.visualize()
         
         frame_with_lane = draw_lane_on_frame(frame, llane, rlane, src_points, dst_points, ipt)
 
         # cv.imshow("frame", frame)
-        # cv.imshow("edges", edges)
+        cv.imshow("edges", edges)
         # cv.imshow("birdseye", birdseye)
-        cv.imshow("birdseye_edges", birdseye_edges)
+        # cv.imshow("birdseye_edges", birdseye_edges)
         cv.imshow("search box visualization", vis)
-        cv.imshow("frame with lane overlay", frame_with_lane)
+        # cv.imshow("frame with lane overlay", frame_with_lane)
+        cv.imshow("src trapezoid", debug_frame)
         
 
 
