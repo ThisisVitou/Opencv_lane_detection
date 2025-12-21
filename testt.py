@@ -116,6 +116,15 @@ def main():
     _, frame_size = cap.read()
     h, w = frame_size.shape[:2]
     print(f"Frame size: {w}x{h}")
+
+    ## Birdeye view transformation
+    src_points, dst_points = get_perspective_points(w, h)
+    ipt = inversePerspectiveTransform(frame_size)
+    birdeye_view = ipt.inverse_perspective_transform(src_points, dst_points)
+    birdeye_edges = detect_edges(birdeye_view).canny_edge()
+
+    search_box = SearchBox(birdeye_view, birdeye_edges, lx=150, rx=420, y=450, width=100, height=20)
+
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -123,29 +132,34 @@ def main():
 
         frame = cv.resize(frame, (720, 480))  # Resize to 720x480
 
-        ##detech each frame edges
-        detector = detect_edges(frame) # create edge detector instance
-        edges = detector.canny_edge()
+
 
         ## Birdeye view transformation
         src_points, dst_points = get_perspective_points(w, h)
         ipt = inversePerspectiveTransform(frame)
         birdeye_view = ipt.inverse_perspective_transform(src_points, dst_points)
-        birdeye_edges = detect_edges(birdeye_view).canny_edge()
+
+        detector = detect_edges(birdeye_view) # create edge detector instance
+        birdeye_edges = detector.canny_edge()
+        
 
         ## debug draw trapezoid
         debug_frame = debug_perspective_transform(frame, src_points)
 
         ## box
 
-        search_box = SearchBox(birdeye_view, birdeye_edges, lx=150, rx=420, y=450, width=100, height=20)
+        # Update the frame and mask
+        search_box.frame = birdeye_view
+        search_box.mask = birdeye_edges
+
         vis, llane, rlane = search_box.visualize()
+
+        
 
 
         # cv.imshow('Webcam', frame)
-        # cv.imshow('Edges', edges)
+        cv.imshow('Edges', birdeye_edges)
         cv.imshow('Debug Frame', debug_frame)
-        # cv.imshow('Birdseye View', birdeye_view)
         cv.imshow("search box visualization", vis)
 
         if cv.waitKey(1) & 0xFF == ord('q'):
